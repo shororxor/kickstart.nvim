@@ -91,7 +91,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -614,7 +614,7 @@ require('lazy').setup({
       -- You can press `g?` for help in this menu.
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
-        'lua_ls', -- Lua Language server
+        'lua-language-server', -- Lua Language server
         'stylua', -- Used to format Lua code
         -- You can add other tools here that you want Mason to install
       })
@@ -653,6 +653,67 @@ require('lazy').setup({
         },
       })
       vim.lsp.enable 'lua_ls'
+    end,
+  },
+
+  { -- Typescript tools language server
+    'pmizio/typescript-tools.nvim',
+    dependencies = { 'nvim-lua/plenary.nvim', 'neovim/nvim-lspconfig' },
+    ft = { 'typescript', 'typescriptreact', 'javascript', 'javascriptreact' }, -- Load only for JS/TS files
+    config = function()
+      -- local api = require('typescript-tools.api')
+      require('typescript-tools').setup {
+
+        -- Integrate with your blink.cmp capabilities
+        capabilities = require('blink.cmp').get_lsp_capabilities(),
+
+        settings = {
+          -- Spawn additional tsserver instance to calculate diagnostics on it
+          separate_diagnostic_server = true,
+
+          -- "change"|"insert_leave" determine when the client asks the server about diagnostic
+          publish_diagnostic_on = 'insert_leave',
+
+          -- Array of strings("fix_all"|"add_missing_imports"|"remove_unused"|
+          -- "remove_unused_imports"|"organize_imports") -- or string "all"
+          -- to include all supported code actions
+          expose_as_code_action = 'all',
+
+          -- String|nil - specify a custom path to `tsserver.js` file, if this is nil or file under path
+          -- not exists then standard path resolution strategy is applied
+          tsserver_path = nil,
+
+          -- Specify a list of plugins to load by tsserver, e.g., for support `styled-components`
+          -- (see 💅 `styled-components` support section)
+          tsserver_plugins = {},
+
+          -- Described below
+          tsserver_max_memory = 'auto',
+
+          -- Locale of all tsserver messages, supported locales here:
+          -- https://github.com/microsoft/TypeScript/blob/3c221fc086be52b19801f6e8d82596d04607ede6/src/compiler/utilitiesPublic.ts#L620
+          tsserver_locale = 'en',
+
+          -- Mirror of VSCode's `typescript.suggest.completeFunctionCalls`
+          complete_function_calls = false,
+          include_completions_with_insert_text = true,
+
+          -- CodeLens
+          -- WARNING: Experimental feature also in VSCode, because it might hit performance of server.
+          -- Possible values: ("off"|"all"|"implementations_only"|"references_only")
+          code_lens = 'off',
+
+          -- By default code lenses are displayed on all referencable values and for some of you it can
+          -- be too much this option reduce count of them by removing member references from lenses
+          disable_member_code_lens = true,
+
+          -- JSX close tag
+          jsx_close_tag = {
+            enable = false,
+            filetypes = { 'javascriptreact', 'typescriptreact' },
+          },
+        },
+      }
     end,
   },
 
@@ -806,7 +867,19 @@ require('lazy').setup({
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+      -- vim.cmd.colorscheme 'tokyonight-night'
+    end,
+  },
+
+  -- Using Lazy
+  {
+    'navarasu/onedark.nvim',
+    priority = 1000, -- make sure to load this before all the other start plugins
+    config = function()
+      require('onedark').setup {
+        style = 'warmer',
+      }
+      require('onedark').load()
     end,
   },
 
@@ -858,6 +931,57 @@ require('lazy').setup({
         pattern = filetypes,
         callback = function() vim.treesitter.start() end,
       })
+    end,
+  },
+
+  { -- Show code outline
+    'stevearc/aerial.nvim',
+    dependencies = {
+      'nvim-treesitter/nvim-treesitter',
+      'nvim-tree/nvim-web-devicons',
+    },
+    config = function()
+      require('aerial').setup {
+        -- Priority list of preferred backends for aerial.
+        -- This can be a filetype map (see :help aerial-filetype-map)
+        backends = { 'lsp', 'treesitter', 'markdown', 'asciidoc', 'man' },
+        layout = {
+          -- These control the width of the aerial window.
+          max_width = { 40, 0.2 },
+          width = nil,
+          min_width = 10,
+          -- Determines the default direction to open the aerial window.
+          default_direction = 'prefer_left',
+          -- Determines where the aerial window will be opened
+          placement = 'window',
+        },
+
+        -- Automatically open aerial when entering supported buffers
+        open_automatic = false,
+
+        -- Show box drawing characters for the tree hierarchy
+        show_guides = true,
+
+        -- Filter symbols by kind
+        filter_kind = {
+          'Class',
+          'Constructor',
+          'Enum',
+          'Function',
+          'Interface',
+          'Module',
+          'Method',
+          'Struct',
+          'Type',
+          'Constant',
+          'Variable',
+        },
+      }
+
+      -- Keymaps
+      vim.keymap.set('n', '<leader>a', '<cmd>AerialToggle!<CR>', { desc = 'Toggle [A]erial' })
+      vim.keymap.set('n', '{', '<cmd>AerialPrev<CR>', { desc = 'Aerial Prev' })
+      vim.keymap.set('n', '}', '<cmd>AerialNext<CR>', { desc = 'Aerial Next' })
     end,
   },
 
